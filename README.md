@@ -10,5 +10,11 @@ Usage of ./chat-transport:
   -v    show current version
 ```
 
+#### Supported transports
+|Messenger|Chats|Channels|
+|--|---|---|
+|Telegram|:heavy_check_mark:|:heavy_multiplication_x:|
+|VK|:clock130:|:clock130:|
+
 #### Configuration
 See [example.conf](https://github.com/DesSolo/chat-transport/blob/master/example/config.conf)
