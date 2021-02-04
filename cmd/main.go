@@ -8,10 +8,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 )
 
 var configFile string
+
+var version string
 
 // GetTransports ...
 func GetTransports(chats map[string]config.Chat) ([]entities.Transport, error) {
@@ -24,7 +27,7 @@ func GetTransports(chats map[string]config.Chat) ([]entities.Transport, error) {
 
 		switch chat.Type {
 		case "telegram":
-			tg := transport.NewTelegram(chat.Name, chat.Token, chat.ChatID)
+			tg := transport.NewTelegram(chat.Name, chat.Token, chat.ChatID, chat.IgnoreAccounts)
 			transports = append(transports, tg)
 
 		default:
@@ -43,7 +46,13 @@ func GetTransports(chats map[string]config.Chat) ([]entities.Transport, error) {
 
 func main() {
 	flag.StringVar(&configFile, "c", "config.toml", "config file path")
+	showVer := flag.Bool("v", false, "show current version")
 	flag.Parse()
+
+	if *showVer {
+		fmt.Printf("chat transport version: %s\n", version)
+		os.Exit(0)
+	}
 
 	conf, err := config.NewConfig(configFile)
 	if err != nil {

@@ -41,26 +41,33 @@ type messageData struct {
 
 // Telegram ...
 type Telegram struct {
-	name         string
-	token        string
-	chatID       string
-	lastUpdateID int
-	client       *http.Client
+	name           string
+	token          string
+	chatID         string
+	ignoreAccounts []string
+	lastUpdateID   int
+	client         *http.Client
 }
 
 // NewTelegram ...
-func NewTelegram(name, token, chatID string) *Telegram {
+func NewTelegram(name, token, chatID string, ignoreAccounts []string) *Telegram {
 	return &Telegram{
-		name:   name,
-		token:  token,
-		chatID: chatID,
-		client: &http.Client{},
+		name:           name,
+		token:          token,
+		chatID:         chatID,
+		ignoreAccounts: ignoreAccounts,
+		client:         &http.Client{},
 	}
 }
 
 // GetName ...
 func (t *Telegram) GetName() string {
 	return t.name
+}
+
+// GetChatID ...
+func (t *Telegram) GetChatID() string {
+	return t.chatID
 }
 
 // Validate ...
@@ -83,7 +90,7 @@ func (t *Telegram) newRequest(method, uri string, body io.Reader) (*http.Request
 // https://core.telegram.org/bots/api#getupdates
 func (t *Telegram) getUpdates(offset int) ([]Update, error) {
 	var payload = bytes.NewBufferString(
-		fmt.Sprintf("{\"offset\": %d}", offset + 1),
+		fmt.Sprintf("{\"offset\": %d}", offset+1),
 	)
 	req, err := t.newRequest("GET", "/getUpdates", payload)
 	if err != nil {
@@ -118,6 +125,16 @@ func (t *Telegram) getUpdates(offset int) ([]Update, error) {
 	return data.Updates, nil
 }
 
+func (t *Telegram) isIgnoreUser(username string) bool {
+	for _, ia := range t.ignoreAccounts {
+		if ia == username {
+			return true
+		}
+	}
+
+	return false
+}
+
 // GetNewMessages ...
 func (t *Telegram) GetNewMessages() ([]*entities.Message, error) {
 	updates, err := t.getUpdates(t.lastUpdateID)
@@ -127,21 +144,31 @@ func (t *Telegram) GetNewMessages() ([]*entities.Message, error) {
 
 	var messages []*entities.Message
 	for _, upd := range updates {
+
+		t.lastUpdateID = upd.UpdateID
+
 		if upd.Message.Text == "" {
 			continue
 		}
 
-		if strconv.Itoa(upd.Message.Chat.ID) != t.chatID {
+		chatID := strconv.Itoa(upd.Message.Chat.ID)
+
+		if chatID != t.chatID {
 			continue
 		}
 
-		t.lastUpdateID = upd.UpdateID
+		if t.isIgnoreUser(upd.Message.From.Username) {
+			continue
+		}
 
 		msg := entities.Message{
 			Author: entities.Author{
 				Username: upd.Message.From.Username,
 			},
 			Text: upd.Message.Text,
+			Chat: entities.Chat{
+				ID: chatID,
+			},
 		}
 		messages = append(messages, &msg)
 	}

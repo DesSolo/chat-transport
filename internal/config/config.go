@@ -6,10 +6,11 @@ import (
 
 // Chat ...
 type Chat struct {
-	Name   string
-	Type   string
-	ChatID string `toml:"chat_id"`
-	Token  string
+	Name           string
+	Type           string
+	ChatID         string `toml:"chat_id"`
+	Token          string
+	IgnoreAccounts []string `toml:"ignore_accounts"`
 }
 
 // Config ...

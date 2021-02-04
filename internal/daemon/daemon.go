@@ -36,6 +36,10 @@ func (d *Daemon) resend(tr entities.Transport) {
 
 			for _, dt := range d.Dst {
 				for _, msg := range messages {
+					if msg.Chat.ID == dt.GetChatID() {
+						continue
+					}
+					
 					if err := dt.SendMessage(msg); err != nil {
 						log.Printf("fault send message src_chat: \"%s\" dst_chat: \"%s\" err: \"%s\"", tr.GetName(), dt.GetName(), err)
 					}
