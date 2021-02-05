@@ -17,4 +17,4 @@ Usage of ./chat-transport:
 |VK|:clock130:|:clock130:|
 
 #### Configuration
-See [example.conf](https://github.com/DesSolo/chat-transport/blob/master/example/config.conf)
+See [examples](https://github.com/DesSolo/chat-transport/tree/master/example)
