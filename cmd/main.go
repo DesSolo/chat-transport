@@ -4,7 +4,7 @@ import (
 	"chat-transport/internal/config"
 	"chat-transport/internal/daemon"
 	"chat-transport/internal/entities"
-	"chat-transport/internal/transport"
+	"chat-transport/internal/transport/telegram"
 	"flag"
 	"fmt"
 	"log"
@@ -27,7 +27,7 @@ func GetTransports(chats map[string]config.Chat) ([]entities.Transport, error) {
 
 		switch chat.Type {
 		case "telegram":
-			tg := transport.NewTelegram(chat.Name, chat.Token, chat.ChatID, chat.IgnoreAccounts)
+			tg := telegram.NewTelegram(chat.Name, chat.Token, chat.ChatID, chat.IgnoreAccounts)
 			transports = append(transports, tg)
 
 		default:
