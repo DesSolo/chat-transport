@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"text/template"
 	"time"
 )
 
@@ -17,17 +18,19 @@ var configFile string
 var version string
 
 // GetTransports ...
-func GetTransports(chats map[string]config.Chat) ([]entities.Transport, error) {
+func GetTransports(chats map[string]*config.Chat) ([]entities.Transport, error) {
 	var transports []entities.Transport
 
-	for name, chat := range chats {
-		if chat.Name == "" {
-			chat.Name = name
-		}
+	for _, chat := range chats {
 
 		switch chat.Type {
 		case "telegram":
-			tg := telegram.NewTelegram(chat.Name, chat.Token, chat.ChatID, chat.IgnoreAccounts)
+			tpl, err := template.New("message").Parse(chat.Template)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			tg := telegram.NewTelegram(chat.Name, chat.Token, chat.ChatID, chat.IgnoreAccounts, tpl)
 			transports = append(transports, tg)
 
 		default:

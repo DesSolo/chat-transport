@@ -8,6 +8,7 @@ import (
 type Chat struct {
 	Name           string
 	Type           string
+	Template       string
 	ChatID         string `toml:"chat_id"`
 	Token          string
 	IgnoreAccounts []string `toml:"ignore_accounts"`
@@ -16,17 +17,36 @@ type Chat struct {
 // Config ...
 type Config struct {
 	Interval int `toml:"update_interval"`
-	Src      map[string]Chat
-	Dst      map[string]Chat
+	Template string
+	Src      map[string]*Chat
+	Dst      map[string]*Chat
 }
 
 // NewConfig ...
 func NewConfig(file string) (*Config, error) {
-	var config Config
+	var cfg Config
 
-	if _, err := toml.DecodeFile(file, &config); err != nil {
+	if _, err := toml.DecodeFile(file, &cfg); err != nil {
 		return nil, err
 	}
 
-	return &config, nil
+	setDefault(&cfg)
+
+	return &cfg, nil
+}
+
+func setDefault(c *Config) {
+	setD := func(s map[string]*Chat) {
+		for name, chat := range s {
+			if chat.Name == "" {
+				chat.Name = name
+			}
+			if chat.Template == "" {
+				chat.Template = c.Template
+			}
+		}
+	}
+
+	setD(c.Src)
+	setD(c.Dst)
 }

@@ -1,10 +1,12 @@
 package telegram
 
 import (
+	"bytes"
 	"chat-transport/internal/entities"
 	"errors"
 	"net/http"
 	"strconv"
+	"text/template"
 )
 
 // Telegram ...
@@ -13,17 +15,19 @@ type Telegram struct {
 	token          string
 	chatID         string
 	ignoreAccounts []string
+	template       *template.Template
 	lastUpdateID   int
 	client         *http.Client
 }
 
 // NewTelegram ...
-func NewTelegram(name, token, chatID string, ignoreAccounts []string) *Telegram {
+func NewTelegram(name, token, chatID string, ignoreAccounts []string, t *template.Template) *Telegram {
 	return &Telegram{
 		name:           name,
 		token:          token,
 		chatID:         chatID,
 		ignoreAccounts: ignoreAccounts,
+		template:       t,
 		client:         &http.Client{},
 	}
 }
@@ -104,5 +108,11 @@ func (t *Telegram) GetNewMessages() ([]*entities.Message, error) {
 
 // SendMessage ...
 func (t *Telegram) SendMessage(m *entities.Message) error {
-	return t.sendMessage(t.chatID, m.Text)
+	var msg bytes.Buffer
+
+	if err := t.template.Execute(&msg, m); err != nil {
+		return err
+	}
+
+	return t.sendMessage(t.chatID, msg.String())
 }
