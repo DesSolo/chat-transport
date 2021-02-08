@@ -12,7 +12,7 @@ const (
 )
 
 // CallMethod ...
-func (c *Client) CallMethod(method string, p RequestParams) ([]byte, error) {
+func (c *Client) callMethod(method string, p RequestParams) ([]byte, error) {
 	params, err := p.URLValues()
 	if err != nil {
 		return nil, err

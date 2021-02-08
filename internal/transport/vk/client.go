@@ -59,7 +59,7 @@ func (c *Client) GetNewMessages() ([]*entities.Message, error) {
 		"time_offset":     "",
 		"last_message_id": 0,
 	}
-	data, err := c.CallMethod("messages.get", p)
+	data, err := c.callMethod("messages.get", p)
 	if err != nil {
 		return nil, err
 	}
@@ -77,11 +77,11 @@ func (c *Client) SendMessage(m *entities.Message) error {
 		"chat_id": c.chatID,
 		"message": m.Text,
 	}
-	data, err := c.CallMethod("messages.send", p)
+	data, err := c.callMethod("messages.send", p)
 	if err != nil {
 		return err
 	}
-	
+
 	fmt.Printf("%s", data)
 
 	return nil
