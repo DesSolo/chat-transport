@@ -76,7 +76,7 @@ func main() {
 
 	log.Printf("success loaded %d dst chat(s)", len(srcTransports))
 
-	updateInterval := time.Duration(conf.Interval) * time.Second
+	updateInterval := conf.Interval * time.Second
 
 	daemon := daemon.NewDaemon(srcTransports, dstTransports, updateInterval)
 

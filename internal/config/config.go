@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/BurntSushi/toml"
 )
 
@@ -16,7 +18,7 @@ type Chat struct {
 
 // Config ...
 type Config struct {
-	Interval int `toml:"update_interval"`
+	Interval time.Duration `toml:"update_interval"`
 	Template string
 	Src      map[string]*Chat
 	Dst      map[string]*Chat
