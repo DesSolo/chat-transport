@@ -13,6 +13,7 @@ type Chat struct {
 	Template       string
 	ChatID         string `toml:"chat_id"`
 	Token          string
+	Cookies        map[string]string
 	IgnoreAccounts []string `toml:"ignore_accounts"`
 }
 

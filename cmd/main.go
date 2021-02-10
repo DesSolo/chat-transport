@@ -5,6 +5,7 @@ import (
 	"chat-transport/internal/daemon"
 	"chat-transport/internal/entities"
 	"chat-transport/internal/transport/telegram"
+	"chat-transport/internal/transport/vk"
 	"flag"
 	"fmt"
 	"log"
@@ -32,6 +33,10 @@ func GetTransports(chats map[string]*config.Chat) ([]entities.Transport, error) 
 
 			tg := telegram.NewTelegram(chat.Name, chat.Token, chat.ChatID, chat.IgnoreAccounts, tpl)
 			transports = append(transports, tg)
+
+		case "vk":
+			vk := vk.NewClient(chat.Name, chat.Token, chat.Cookies["remixsid"], chat.ChatID, chat.IgnoreAccounts)
+			transports = append(transports, vk)
 
 		default:
 			return nil, fmt.Errorf("transport \"%s\" not supported", chat.Type)

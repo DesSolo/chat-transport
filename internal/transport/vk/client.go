@@ -10,18 +10,20 @@ import (
 // Client ...
 type Client struct {
 	name           string
-	accessToken    string
+	authBasic      string
+	cookieRemixsID string
 	chatID         string
 	ignoreAccounts []string
-	lastUpdateID   int
-	client         *http.Client
+	// lastUpdateID   int
+	client *http.Client
 }
 
 // NewClient ...
-func NewClient(name, accessToken, chatID string, ignoreAccounts []string) *Client {
+func NewClient(name, authBasic, cookieRemixsID, chatID string, ignoreAccounts []string) *Client {
 	return &Client{
 		name:           name,
-		accessToken:    accessToken,
+		authBasic:      authBasic,
+		cookieRemixsID: cookieRemixsID,
 		chatID:         chatID,
 		ignoreAccounts: ignoreAccounts,
 		client:         &http.Client{},
@@ -40,8 +42,12 @@ func (c *Client) GetChatID() string {
 
 // Validate ...
 func (c *Client) Validate() error {
-	if c.accessToken == "" {
-		return errors.New("access_token value not valid")
+	if c.authBasic == "" {
+		return errors.New("auth_basic value not valid")
+	}
+
+	if c.cookieRemixsID == "" {
+		return errors.New("cookie_remixsid not valid")
 	}
 
 	if c.chatID == "" {
@@ -55,15 +61,26 @@ func (c *Client) Validate() error {
 func (c *Client) GetNewMessages() ([]*entities.Message, error) {
 	// https://vk.com/dev/messages.get
 	p := RequestParams{
-		"offset":          1,
-		"time_offset":     "",
-		"last_message_id": 0,
+		"filters": 8,
+		"offset":  0,
 	}
-	data, err := c.callMethod("messages.get", p)
+	data, err := c.callMethod("messages.get", "1612984943:09d70e65be95b44b7a", p)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("%s", data)
+
+	var resp struct {
+		Response struct {
+			Count int      `json:"count"`
+			Items []string `json:"items"`
+		} `json:"response"`
+	}
+
+	if err := unmarshal(data, &resp); err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("total %d", resp.Response.Count)
 
 	return nil, nil
 }
@@ -77,7 +94,7 @@ func (c *Client) SendMessage(m *entities.Message) error {
 		"chat_id": c.chatID,
 		"message": m.Text,
 	}
-	data, err := c.callMethod("messages.send", p)
+	data, err := c.callMethod("messages.send", "", p)
 	if err != nil {
 		return err
 	}
