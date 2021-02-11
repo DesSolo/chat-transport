@@ -6,11 +6,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"golang.org/x/net/html/charset"
 )
 
 const (
 	apiURL     = "https://vk.com/dev"
-	apiVersion = "5.52"
+	apiVersion = "5.130"
 )
 
 // CallMethod ...
@@ -45,7 +47,18 @@ func (c *Client) callMethod(method, hash string, p RequestParams) ([]byte, error
 		return nil, err
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("not valid status code: %d", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+
+	utf8, err := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(utf8)
 }
 
 func unmarshal(b []byte, v interface{}) error {

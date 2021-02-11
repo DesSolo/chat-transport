@@ -6,10 +6,12 @@ import (
 	"chat-transport/internal/entities"
 	"chat-transport/internal/transport/telegram"
 	"chat-transport/internal/transport/vk"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"text/template"
 	"time"
 )
@@ -35,7 +37,23 @@ func GetTransports(chats map[string]*config.Chat) ([]entities.Transport, error) 
 			transports = append(transports, tg)
 
 		case "vk":
-			vk := vk.NewClient(chat.Name, chat.Token, chat.Cookies["remixsid"], chat.ChatID, chat.IgnoreAccounts)
+			chatID, err := strconv.Atoi(chat.ChatID)
+			if err != nil {
+				return nil, errors.New("chat_id must be integer")
+			}
+
+			var ignoreAccounts []int
+
+			for _, sid := range chat.IgnoreAccounts {
+				iid, err := strconv.Atoi(sid)
+				if err != nil {
+					return nil, errors.New("ignore account id must be integer")
+				} 
+
+				ignoreAccounts = append(ignoreAccounts, iid)
+			}
+
+			vk := vk.NewClient(chat.Name, chat.Token, chat.Cookies["remixsid"], chatID, ignoreAccounts)
 			transports = append(transports, vk)
 
 		default:
