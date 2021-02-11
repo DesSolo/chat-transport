@@ -1,34 +1,37 @@
 package vk
 
 import (
+	"bytes"
 	"chat-transport/internal/entities"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
+	"text/template"
 )
 
 // Client ...
 type Client struct {
 	name           string
-	authBasic      string
-	cookieRemixsID string
+	accessToken    string
 	chatID         int
 	strChatID      string
 	ignoreAccounts []int
+	template       *template.Template
 	lastMessageID  int
 	client         *http.Client
 }
 
 // NewClient ...
-func NewClient(name, authBasic, cookieRemixsID string, chatID int, ignoreAccounts []int) *Client {
+func NewClient(name, accessToken string, chatID int, ignoreAccounts []int, t *template.Template) *Client {
 	return &Client{
 		name:           name,
-		authBasic:      authBasic,
-		cookieRemixsID: cookieRemixsID,
+		accessToken:    accessToken,
 		chatID:         chatID,
 		strChatID:      strconv.Itoa(chatID),
 		ignoreAccounts: ignoreAccounts,
+		template:       t,
 		client:         &http.Client{},
 	}
 }
@@ -45,16 +48,8 @@ func (c *Client) GetChatID() string {
 
 // Validate ...
 func (c *Client) Validate() error {
-	if c.authBasic == "" {
-		return errors.New("auth_basic value not valid")
-	}
-
-	if c.cookieRemixsID == "" {
-		return errors.New("cookie_remixsid not valid")
-	}
-
-	if c.chatID <= 0 {
-		return errors.New("chat value not valid")
+	if c.accessToken == "" {
+		return errors.New("token value not valid")
 	}
 
 	return nil
@@ -74,12 +69,11 @@ func (c *Client) isIgnore(userID int) bool {
 func (c *Client) GetNewMessages() ([]*entities.Message, error) {
 	// https://vk.com/dev/messages.getHistory
 	p := RequestParams{
-		"count":    100,
 		"extended": 1,
 		"fields":   "first_name,last_name",
-		"user_id":  c.chatID,
+		"peer_id":  c.chatID,
 	}
-	data, err := c.callMethod("messages.getHistory", "1613066804:bd9ed3fd78469fd161", p)
+	data, err := c.callMethod("messages.getHistory", p)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +94,7 @@ func (c *Client) GetNewMessages() ([]*entities.Message, error) {
 		} `json:"response"`
 	}
 
-	if err := unmarshal(data, &resp); err != nil {
+	if err := json.Unmarshal(data, &resp); err != nil {
 		return nil, err
 	}
 
@@ -113,9 +107,6 @@ func (c *Client) GetNewMessages() ([]*entities.Message, error) {
 
 	for i := len(resp.Response.Items) - 1; i >= 0; i-- {
 		item := resp.Response.Items[i]
-		if item.FromID != c.chatID {
-			continue
-		}
 
 		if c.isIgnore(item.FromID) {
 			continue
@@ -151,16 +142,22 @@ func (c *Client) GetNewMessages() ([]*entities.Message, error) {
 // SendMessage ...
 func (c *Client) SendMessage(m *entities.Message) error {
 	// https://vk.com/dev/messages.send
-	p := RequestParams{
-		"chat_id": c.chatID,
-		"message": m.Text,
-	}
-	data, err := c.callMethod("messages.send", "1612992731:1595b2893c2f8feb1c", p)
-	if err != nil {
+	var msg bytes.Buffer
+
+	if err := c.template.Execute(&msg, m); err != nil {
 		return err
 	}
 
-	fmt.Printf("%s", data)
+	p := RequestParams{
+		"peer_id":   c.chatID,
+		"message":   msg.String(),
+		"random_id": 0,
+	}
+
+	_, err := c.callMethod("messages.send", p)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -1,7 +1,6 @@
 package vk
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,36 +10,26 @@ import (
 )
 
 const (
-	apiURL     = "https://vk.com/dev"
+	apiURL     = "https://api.vk.com/method/"
 	apiVersion = "5.130"
 )
 
 // CallMethod ...
-func (c *Client) callMethod(method, hash string, p RequestParams) ([]byte, error) {
-	for param := range p {
-		p["param_"+param] = p[param]
-		delete(p, param)
-	}
+func (c *Client) callMethod(method string, p RequestParams) ([]byte, error) {
 	params, err := p.URLValues()
 	if err != nil {
 		return nil, err
 	}
 
-	params.Set("act", "a_run_method")
-	params.Set("al", "1")
-	params.Set("method", method)
-	params.Set("hash", hash)
-	params.Set("param_v", apiVersion)
+	params.Set("access_token", c.accessToken)
+	params.Set("v", apiVersion)
 
-	req, err := http.NewRequest(http.MethodPost, apiURL, strings.NewReader(params.Encode()))
+	req, err := http.NewRequest(http.MethodPost, apiURL+method, strings.NewReader(params.Encode()))
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Set("X-Requested-With", "XMLHttpRequest")
-	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", c.authBasic))
-	req.Header.Set("Cookie", fmt.Sprintf("remixsid=%s", c.cookieRemixsID))
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -59,18 +48,4 @@ func (c *Client) callMethod(method, hash string, p RequestParams) ([]byte, error
 	}
 
 	return ioutil.ReadAll(utf8)
-}
-
-func unmarshal(b []byte, v interface{}) error {
-	var dr map[string]interface{}
-	if err := json.Unmarshal(b, &dr); err != nil {
-		return err
-	}
-
-	payload := dr["payload"].([]interface{})[1].([]interface{})[0].(string)
-	if err := json.Unmarshal([]byte(payload), v); err != nil {
-		return err
-	}
-
-	return nil
 }
