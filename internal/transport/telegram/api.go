@@ -14,7 +14,7 @@ func (t *Telegram) newRequest(method, uri string, body io.Reader) (*http.Request
 }
 
 // https://core.telegram.org/bots/api#getupdates
-func (t *Telegram) getUpdates(offset int) ([]Update, error) {
+func (t *Telegram) getUpdates(offset int) ([]update, error) {
 	var payload = bytes.NewBufferString(
 		fmt.Sprintf("{\"offset\": %d}", offset+1),
 	)
@@ -42,7 +42,7 @@ func (t *Telegram) getUpdates(offset int) ([]Update, error) {
 
 	var data struct {
 		Ok      bool     `json:"ok"`
-		Updates []Update `json:"result"`
+		Updates []update `json:"result"`
 	}
 	if err := json.Unmarshal(b, &data); err != nil {
 		return nil, err

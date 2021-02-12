@@ -5,10 +5,13 @@ import (
 	"chat-transport/internal/daemon"
 	"chat-transport/internal/entities"
 	"chat-transport/internal/transport/telegram"
+	"chat-transport/internal/transport/vk"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"text/template"
 	"time"
 )
@@ -25,13 +28,38 @@ func GetTransports(chats map[string]*config.Chat) ([]entities.Transport, error) 
 
 		switch chat.Type {
 		case "telegram":
-			tpl, err := template.New("message").Parse(chat.Template)
+			tpl, err := template.New("telegram").Parse(chat.Template)
 			if err != nil {
-				log.Fatal(err)
+				return nil, err
 			}
 
 			tg := telegram.NewTelegram(chat.Name, chat.Token, chat.ChatID, chat.IgnoreAccounts, tpl)
 			transports = append(transports, tg)
+
+		case "vk":
+			tpl, err := template.New("vk").Parse(chat.Template)
+			if err != nil {
+				return nil, err
+			}
+
+			chatID, err := strconv.Atoi(chat.ChatID)
+			if err != nil {
+				return nil, errors.New("chat_id must be integer")
+			}
+
+			var ignoreAccounts []int
+
+			for _, sid := range chat.IgnoreAccounts {
+				iid, err := strconv.Atoi(sid)
+				if err != nil {
+					return nil, errors.New("ignore account id must be integer")
+				}
+
+				ignoreAccounts = append(ignoreAccounts, iid)
+			}
+
+			vk := vk.NewClient(chat.Name, chat.Token, chatID, ignoreAccounts, tpl)
+			transports = append(transports, vk)
 
 		default:
 			return nil, fmt.Errorf("transport \"%s\" not supported", chat.Type)
@@ -76,7 +104,7 @@ func main() {
 
 	log.Printf("success loaded %d dst chat(s)", len(srcTransports))
 
-	updateInterval := time.Duration(conf.Interval) * time.Second
+	updateInterval := conf.Interval * time.Second
 
 	daemon := daemon.NewDaemon(srcTransports, dstTransports, updateInterval)
 
