@@ -14,7 +14,7 @@ Usage of ./chat-transport:
 |Messenger|Chats|Channels|
 |--|---|---|
 |Telegram|:heavy_check_mark:|:heavy_multiplication_x:|
-|VK|:clock130:|:clock130:|
+|VK|:heavy_multiplication_x:|:heavy_check_mark:|
 
 #### Configuration
 See [examples](https://github.com/DesSolo/chat-transport/tree/master/example)
