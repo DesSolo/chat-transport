@@ -2,7 +2,7 @@ BINARIES_DIRECTORY = bin
 MAIN_FILE = cmd/main.go
 PROJECT_NAME = $(shell basename "$(PWD)")
 VERSION = $(shell cat VERSION)
-LDFLAGS = "-X main.version=${VERSION}"
+LDFLAGS = "-w -s -X main.version=${VERSION}"
 OS := $(shell uname)
 
 clean:
